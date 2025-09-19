@@ -10,12 +10,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Discord OAuth i role z ENV
+// Discord OAuth + guild + role
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI; // https://admstronaunimc.netlify.app/auth/discord/callback
+const REDIRECT_URI = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
-const ALLOWED_ROLES = process.env.ALLOWED_ROLES.split(',');
+const ALLOWED_ROLES = process.env.ALLOWED_ROLES.split(','); // np. "1170358299221295104"
 
 // Sesja
 app.use(session({ secret: 'discordsecret', resave: false, saveUninitialized: false }));
@@ -29,6 +29,8 @@ async function checkRole(req, res, next) {
       `https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,
       { headers: { Authorization: `Bearer ${req.session.access_token}` } }
     );
+
+    if (!memberRes.ok) return res.status(403).send('Brak dostępu – nie jesteś członkiem serwera');
 
     const member = await memberRes.json();
     const roles = member.roles || [];
