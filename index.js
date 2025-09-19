@@ -10,10 +10,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Discord OAuth i role
+// Discord OAuth i role z ENV
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = 'https://admstronaunimc.netlify.app/';
+const REDIRECT_URI = process.env.REDIRECT_URI; // https://admstronaunimc.netlify.app/auth/discord/callback
 const GUILD_ID = process.env.GUILD_ID;
 const ALLOWED_ROLES = process.env.ALLOWED_ROLES.split(',');
 
@@ -25,12 +25,15 @@ async function checkRole(req, res, next) {
   if (!req.session.access_token) return res.redirect('/auth/discord');
 
   try {
-    const memberRes = await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, {
-      headers: { Authorization: `Bearer ${req.session.access_token}` }
-    });
+    const memberRes = await fetch(
+      `https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,
+      { headers: { Authorization: `Bearer ${req.session.access_token}` } }
+    );
+
     const member = await memberRes.json();
     const roles = member.roles || [];
     const hasAccess = roles.some(r => ALLOWED_ROLES.includes(r));
+
     if (!hasAccess) return res.status(403).send('Brak dostępu – nie masz wymaganej roli.');
     next();
   } catch (err) {
@@ -39,15 +42,19 @@ async function checkRole(req, res, next) {
   }
 }
 
-// Autoryzacja Discord
+// Automatyczne przekierowanie na Discord OAuth
 app.get('/auth/discord', (req, res) => {
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify guilds.members.read`;
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
+    REDIRECT_URI
+  )}&response_type=code&scope=identify guilds.members.read`;
   res.redirect(url);
 });
 
-// Callback Discord OAuth
+// Callback po autoryzacji Discord
 app.get('/auth/discord/callback', async (req, res) => {
   const code = req.query.code;
+  if (!code) return res.status(400).send('Brak kodu autoryzacji');
+
   const data = new URLSearchParams({
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
@@ -62,8 +69,10 @@ app.get('/auth/discord/callback', async (req, res) => {
       body: data,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+
     const tokenData = await tokenRes.json();
     req.session.access_token = tokenData.access_token;
+
     res.redirect('/');
   } catch (err) {
     console.error(err);
@@ -71,11 +80,10 @@ app.get('/auth/discord/callback', async (req, res) => {
   }
 });
 
-// Strona główna – wymaga odpowiedniej roli
+// Strona główna – dostęp tylko dla osób z rolą
 app.get('/', checkRole, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Uruchomienie serwera
 app.listen(PORT, () => console.log(`Server działa na porcie ${PORT}`));
-
-
