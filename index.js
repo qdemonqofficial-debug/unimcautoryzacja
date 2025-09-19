@@ -77,3 +77,4 @@ app.get('/', checkRole, (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server działa na porcie ${PORT}`));
+
