@@ -8,16 +8,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
+// Discord OAuth i role
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
 const ALLOWED_ROLES = process.env.ALLOWED_ROLES.split(',');
 
+// Sesja
 app.use(session({ secret: 'discordsecret', resave: false, saveUninitialized: false }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware sprawdzający rolę
 async function checkRole(req, res, next) {
@@ -44,6 +45,7 @@ app.get('/auth/discord', (req, res) => {
   res.redirect(url);
 });
 
+// Callback Discord OAuth
 app.get('/auth/discord/callback', async (req, res) => {
   const code = req.query.code;
   const data = new URLSearchParams({
@@ -71,7 +73,7 @@ app.get('/auth/discord/callback', async (req, res) => {
 
 // Strona główna – wymaga odpowiedniej roli
 app.get('/', checkRole, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server działa na porcie ${PORT}`));
