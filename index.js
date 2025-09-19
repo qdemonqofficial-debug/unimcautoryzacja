@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 10000;
 // Discord OAuth i role
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+const REDIRECT_URI = 'https://admstronaunimc.netlify.app/';
 const GUILD_ID = process.env.GUILD_ID;
 const ALLOWED_ROLES = process.env.ALLOWED_ROLES.split(',');
 
@@ -77,4 +77,5 @@ app.get('/', checkRole, (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server działa na porcie ${PORT}`));
+
 
